@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:yandex_mapkit/yandex_mapkit.dart';
@@ -178,7 +179,9 @@ class _MapPageState extends State<MapPage> {
                             icon: Icon(Icons.chat_outlined),
                             color: Colors.blueGrey.withOpacity(0.8),
                             iconSize: 70,
-                            onPressed: () {},
+                            onPressed: () {
+                              _requestRoutes;
+                            },
                           ),
                         ),
                       ]
@@ -189,10 +192,224 @@ class _MapPageState extends State<MapPage> {
     );
   }
 
+  final PlacemarkMapObject startPlacemark = PlacemarkMapObject(
+    mapId: MapObjectId('start_placemark'),
+    point: Point(latitude: 52.2, longitude: 104.2),
+    icon: PlacemarkIcon.single(
+        PlacemarkIconStyle(
+            image: BitmapDescriptor.fromAssetImage('lib/assets/route_start.png'),
+            scale: 0.3
+        )
+    ),
+  );
+  final PlacemarkMapObject stopByPlacemark = PlacemarkMapObject(
+    mapId: MapObjectId('stop_by_placemark'),
+    point: Point(latitude: 52.29, longitude: 104.28),
+    icon: PlacemarkIcon.single(
+        PlacemarkIconStyle(
+            image: BitmapDescriptor.fromAssetImage('lib/assets/route_start.png'),
+            scale: 0.3
+        )
+    ),
+  );
+  final PlacemarkMapObject endPlacemark = PlacemarkMapObject(
+      mapId: MapObjectId('end_placemark'),
+      point: Point(latitude: 52.4, longitude: 104.32),
+      icon: PlacemarkIcon.single(
+          PlacemarkIconStyle(
+              image: BitmapDescriptor.fromAssetImage('lib/assets/route_start.png'),
+              scale: 0.3
+          )
+      )
+  );
+
+  Future<void> _requestRoutes() async {
+    var resultWithSession = YandexDriving.requestRoutes(
+        points: [
+          RequestPoint(point: startPlacemark.point, requestPointType: RequestPointType.wayPoint),
+          RequestPoint(point: stopByPlacemark.point, requestPointType: RequestPointType.viaPoint),
+          RequestPoint(point: endPlacemark.point, requestPointType: RequestPointType.wayPoint),
+        ],
+        drivingOptions: DrivingOptions(
+            initialAzimuth: 0,
+            routesCount: 5,
+            avoidTolls: true
+        )
+    );
+    await Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (BuildContext context) => _SessionPage(
+                startPlacemark,
+                endPlacemark,
+                resultWithSession.session,
+                resultWithSession.result
+            )
+        )
+    );
+  }
+
   deleteMarkers(MapObjectId mapObjectIdDelete, MapObjectId mapObjectId) async{
     setState(() {
       mapObjects.removeWhere((el) => el.mapId == mapObjectIdDelete);
       mapObjects.removeWhere((el) => el.mapId == mapObjectId);
+    });
+  }
+}
+
+
+class _SessionPage extends StatefulWidget {
+  final Future<DrivingSessionResult> result;
+  final DrivingSession session;
+  final PlacemarkMapObject startPlacemark;
+  final PlacemarkMapObject endPlacemark;
+
+  _SessionPage(this.startPlacemark, this.endPlacemark, this.session, this.result);
+
+  @override
+  _SessionState createState() => _SessionState();
+}
+
+class _SessionState extends State<_SessionPage> {
+  late final List<MapObject> mapObjects = [
+    widget.startPlacemark,
+    widget.endPlacemark
+  ];
+
+  final List<DrivingSessionResult> results = [];
+  bool _progress = true;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _init();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+
+    _close();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        appBar: AppBar(title: Text('Driving ${widget.session.id}')),
+        body: Container(
+            padding: EdgeInsets.all(8),
+            child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  SizedBox(
+                    width: MediaQuery.of(context).size.width,
+                    height: 300,
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        YandexMap(
+                            mapObjects: mapObjects
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 20),
+                  Expanded(
+                      child: SingleChildScrollView(
+                          child: Column(
+                              children: <Widget>[
+                                SizedBox(
+                                    height: 60,
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      crossAxisAlignment: CrossAxisAlignment.center,
+                                      children: [
+                                        !_progress ? Container() : TextButton.icon(
+                                            icon: CircularProgressIndicator(),
+                                            label: Text('Cancel'),
+                                            onPressed: _cancel
+                                        )
+                                      ],
+                                    )
+                                ),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  children: <Widget>[
+                                    Flexible(
+                                      child: Padding(
+                                          padding: EdgeInsets.only(top: 20),
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: _getList(),
+                                          )
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ]
+                          )
+                      )
+                  )
+                ]
+            )
+        )
+    );
+  }
+
+  List<Widget> _getList() {
+    final list = <Widget>[];
+
+    if (results.isEmpty) {
+      list.add((Text('Nothing found')));
+    }
+
+    for (var r in results) {
+      list.add(Container(height: 20));
+
+      r.routes!.asMap().forEach((i, route) {
+        list.add(Text('Route $i: ${route.metadata.weight.timeWithTraffic.text}'));
+      });
+
+      list.add(Container(height: 20));
+    }
+
+    return list;
+  }
+
+  Future<void> _cancel() async {
+    await widget.session.cancel();
+
+    setState(() { _progress = false; });
+  }
+
+  Future<void> _close() async {
+    await widget.session.close();
+  }
+
+  Future<void> _init() async {
+    await _handleResult(await widget.result);
+  }
+
+  Future<void> _handleResult(DrivingSessionResult result) async {
+    setState(() { _progress = false; });
+
+    if (result.error != null) {
+      print('Error: ${result.error}');
+      return;
+    }
+
+    setState(() { results.add(result); });
+    setState(() {
+      result.routes!.asMap().forEach((i, route) {
+        mapObjects.add(PolylineMapObject(
+          mapId: MapObjectId('route_${i}_polyline'),
+          polyline: Polyline(points: route.geometry),
+          strokeColor: Colors.primaries[Random().nextInt(Colors.primaries.length)],
+          strokeWidth: 3,
+        ));
+      });
     });
   }
 }
