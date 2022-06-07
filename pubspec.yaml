@@ -39,6 +39,7 @@ dependencies:
   firebase_core:
   date_field: ^3.0.0
   firebase_auth: ^3.3.4
+  toast: ^0.2.9
 
 dev_dependencies:
   flutter_test:

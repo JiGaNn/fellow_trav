@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:toast/toast.dart';
 
 class RegistrationPage extends StatefulWidget {
   const RegistrationPage({Key? key}) : super(key: key);
@@ -170,7 +171,6 @@ class _RegistrationPageState extends State<RegistrationPage> {
                         passwordComplete = true;
                       }else{
                         passwordComplete = false;
-                        throw Error();
                       }
                     },
                     obscureText: true,
@@ -404,7 +404,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
                         passwordComplete = true;
                       }else{
                         passwordComplete = false;
-                        throw Error();
+                        //Toast.show("Пароли не совпадают!", duration: Toast.lengthShort, gravity:  Toast.bottom, backgroundColor: Color.fromRGBO(208, 208, 208, 1),);
                       }
                     },
                     obscureText: true,

@@ -35,7 +35,7 @@ class _WaysPageState extends State<WaysPage> {
                                     Text("Максимальное число пассажиров: "+(snapshot.data?.docs[index].get('max_pas').toString() as String))
                                   ],
                                 ),
-                                trailing: IconButton(icon: Icon(Icons.delete_sweep, color: Colors.deepOrangeAccent), // Icon
+                                trailing: IconButton(icon: Icon(Icons.delete_sweep, color: Color.fromRGBO(76, 80, 95, 1)), // Icon
                                   onPressed : ( ) {
                                     setState ((){
                                       FirebaseFirestore.instance.collection('ways').doc(snapshot.data?.docs[index].id).delete();
