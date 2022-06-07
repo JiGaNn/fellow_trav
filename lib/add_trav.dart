@@ -2,6 +2,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:date_field/date_field.dart';
+import 'package:yand_map/MapPoint.dart';
+import 'package:yandex_mapkit/yandex_mapkit.dart';
 
 class AddTrav extends StatefulWidget {
   const AddTrav({Key? key}) : super(key: key);
@@ -11,11 +13,15 @@ class AddTrav extends StatefulWidget {
 }
 
 class _AddTravState extends State<AddTrav> {
+
+  final controllerFrom = TextEditingController();
+  final controllerTo = TextEditingController();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SingleChildScrollView(
-        padding: EdgeInsets.fromLTRB(19, 55, 19, 0),
+        padding: EdgeInsets.fromLTRB(19, 55, 19, 15),
         reverse: true,
         child: Column(
           children: [
@@ -23,13 +29,14 @@ class _AddTravState extends State<AddTrav> {
               alignment: Alignment.topLeft,
               child: IconButton(
                 onPressed: () {
-                  Navigator.pop(context);
+                  Navigator.pushReplacementNamed(context, '/map');
                 },
                 icon: Image.asset("lib/assets/arrow.png"),
               ),
             ),
             const Padding(padding: EdgeInsets.only(bottom: 25.0)),
             TextField(
+              controller: controllerFrom,
               textAlign: TextAlign.start,
               style: TextStyle(
                   fontFamily: "SFProDisplay",
@@ -53,6 +60,7 @@ class _AddTravState extends State<AddTrav> {
             ),
             const Padding(padding: EdgeInsets.only(bottom: 10.0)),
             TextField(
+              controller: controllerTo,
               textAlign: TextAlign.start,
               style: TextStyle(
                   fontFamily: "SFProDisplay",
@@ -223,9 +231,10 @@ class _AddTravState extends State<AddTrav> {
                 ),
               ),
             ),
-            const Padding(padding: EdgeInsets.only(bottom: 90.0)),
+            const Padding(padding: EdgeInsets.only(bottom: 50.0)),
             ElevatedButton(
                 onPressed: () {
+                  addTrav();
                   Navigator.pushReplacementNamed(context, '/map');
                 },
                 child: const Text("Создать поездку",
@@ -249,5 +258,51 @@ class _AddTravState extends State<AddTrav> {
         ),
       ),
     );
+  }
+
+  Future<void> addTrav() async {
+    var query = controllerFrom.text;
+    print('Search query: $query');
+    var resultWithSession = YandexSearch.searchByText(
+      searchText: query,
+      geometry: Geometry.fromBoundingBox(
+          BoundingBox(
+            southWest: Point(latitude: 55.76996383933034, longitude: 37.57483142322235),
+            northEast: Point(latitude: 55.785322774728414, longitude: 37.590924677311705),
+          )
+      ),
+      searchOptions: SearchOptions(
+        searchType: SearchType.geo,
+        geometry: false,
+      ),
+    );
+    //resultWithSession.session.
+    print((await resultWithSession.result as SearchSessionResult).items?.first.toponymMetadata!.address.formattedAddress);
+    MapPoint.pointFrom = (await resultWithSession.result as SearchSessionResult).items?.first.geometry.first.point as Point;
+    var from = ((await resultWithSession.result as SearchSessionResult).items?.first.toponymMetadata!.address.formattedAddress as String);
+    
+    query = controllerTo.text;
+    print('Search query: $query');
+    resultWithSession = YandexSearch.searchByText(
+      searchText: query,
+      geometry: Geometry.fromBoundingBox(
+          BoundingBox(
+            southWest: Point(latitude: 55.76996383933034, longitude: 37.57483142322235),
+            northEast: Point(latitude: 55.785322774728414, longitude: 37.590924677311705),
+          )
+      ),
+      searchOptions: SearchOptions(
+        searchType: SearchType.geo,
+        geometry: false,
+      ),
+    );
+    //resultWithSession.session.
+    print((await resultWithSession.result as SearchSessionResult).items?.first.toponymMetadata!.address.formattedAddress);
+    MapPoint.pointTo = (await resultWithSession.result as SearchSessionResult).items?.first.geometry.first.point as Point;
+    var to = ((await resultWithSession.result as SearchSessionResult).items?.first.toponymMetadata!.address.formattedAddress as String);
+    
+    MapPoint.mapObjectIdFrom = MapObjectId(from+to);
+    MapPoint.mapObjectIdTo = MapObjectId(to+from);
+    MapPoint.drawPoint();
   }
 }

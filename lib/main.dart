@@ -7,12 +7,15 @@ import 'map_page.dart';
 
 
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   runApp(MaterialApp(
     initialRoute: '/',
     routes: {
-      '/': (context) => const AddTrav(),
+      '/': (context) => const WelcomePage(),
       '/reg': (context) => const RegistrationPage(),
-      '/map': (context) => const MapPage(),
+      '/map': (context) => MapPage(),
+      '/add_trav': (context) => const AddTrav(),
     },
   ));
 }

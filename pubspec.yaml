@@ -38,6 +38,7 @@ dependencies:
   cloud_firestore:
   firebase_core:
   date_field: ^3.0.0
+  firebase_auth: ^3.3.4
 
 dev_dependencies:
   flutter_test:
