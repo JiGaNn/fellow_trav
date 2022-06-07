@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
@@ -16,6 +18,9 @@ class _AddTravState extends State<AddTrav> {
 
   final controllerFrom = TextEditingController();
   final controllerTo = TextEditingController();
+  String controllerDate = "";
+  String controllerTime = "";
+  late int maxPassager;
 
   @override
   Widget build(BuildContext context) {
@@ -86,6 +91,9 @@ class _AddTravState extends State<AddTrav> {
             Align(
               alignment: Alignment.centerLeft,
               child: DateTimeFormField(
+                onDateSelected: (DateTime? date) {
+                  controllerDate = date.toString().trim();
+                },
                 dateTextStyle: TextStyle(
                     fontFamily: "SFProDisplay",
                     fontWeight: FontWeight.w500,
@@ -119,6 +127,9 @@ class _AddTravState extends State<AddTrav> {
             Align(
               alignment: Alignment.centerLeft,
               child: DateTimeFormField(
+                onDateSelected: (DateTime? date) {
+                  controllerTime = date.toString().trim();
+                },
                 dateTextStyle: TextStyle(
                     fontFamily: "SFProDisplay",
                     fontWeight: FontWeight.w500,
@@ -150,6 +161,10 @@ class _AddTravState extends State<AddTrav> {
             ),
             const Padding(padding: EdgeInsets.only(bottom: 20.0)),
             TextField(
+              keyboardType: TextInputType.number,
+              onChanged: (value) {
+                maxPassager = int.parse(value.trim());
+              },
               textAlign: TextAlign.start,
               style: TextStyle(
                   fontFamily: "SFProDisplay",
@@ -234,6 +249,7 @@ class _AddTravState extends State<AddTrav> {
             const Padding(padding: EdgeInsets.only(bottom: 50.0)),
             ElevatedButton(
                 onPressed: () {
+                  addWay();
                   addTrav();
                   Navigator.pushReplacementNamed(context, '/map');
                 },
@@ -305,4 +321,18 @@ class _AddTravState extends State<AddTrav> {
     MapPoint.mapObjectIdTo = MapObjectId(to+from);
     MapPoint.drawPoint();
   }
+  Future addWay() async {
+      User? user = FirebaseAuth.instance.currentUser;
+      await FirebaseFirestore.instance.collection("ways").doc(user?.uid).set({
+        'uid': user?.uid,
+        'from': controllerFrom.text.trim(),
+        'to': controllerTo.text.trim(),
+        'date': controllerDate,
+        'time': controllerTime,
+        'max_pas': maxPassager
+      });
+  }
 }
+//evgenij29082002@gmail.com
+//Irkutsk Novatorov 33
+//Irkutsk Lenina 36

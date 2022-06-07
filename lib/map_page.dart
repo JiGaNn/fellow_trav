@@ -60,7 +60,9 @@ class _MapPageState extends State<MapPage> {
                                   color: Color.fromRGBO(16, 168, 229, 1),
                                 ),
                                 IconButton(
-                                  onPressed: () {  },
+                                  onPressed: () {
+                                    Navigator.pushNamed(context, '/ways');
+                                  },
                                   icon: Icon(Icons.alt_route_outlined),
                                   iconSize: 40,
                                   color: Color.fromRGBO(16, 168, 229, 1),
