@@ -6,17 +6,15 @@ import 'package:yand_map/MapPoint.dart';
 import 'package:yandex_mapkit/yandex_mapkit.dart';
 
 class MapPage extends StatefulWidget {
+
   late DrivingSessionResult result;
   @override
   State<MapPage> createState() => _MapPageState();
 }
 
 class _MapPageState extends State<MapPage> {
-  MapObjectId mapObjectId = MapObjectId('');
-  final TextEditingController queryController = TextEditingController();
   final animation = MapAnimation(type: MapAnimationType.smooth, duration: 2.0);
   late YandexMapController controller;
-  var point;
   final List<DrivingSessionResult> results = [];
   List<MapObject> mapObjects = MapPoint.mapObjects;
 
@@ -117,7 +115,7 @@ class _MapPageState extends State<MapPage> {
     setState(() {
       result.routes!.asMap().forEach((i, route) {
         MapPoint.mapObjects.add(PolylineMapObject(
-          mapId: MapObjectId('${MapPoint.mapObjectIdFrom.value} + ${MapPoint.mapObjectIdTo.value}'),
+          mapId: MapObjectId('route_${i}_polyline'),
           polyline: Polyline(points: route.geometry),
           strokeColor: Colors.primaries[Random().nextInt(Colors.primaries.length)],
           strokeWidth: 3,
@@ -125,10 +123,9 @@ class _MapPageState extends State<MapPage> {
       });
     });
   }
-  deleteMarkers(MapObjectId mapObjectIdDelete, MapObjectId mapObjectId) async{
+  deleteMarkers(MapObjectId mapObjectIdDelete) async{
     setState(() {
       mapObjects.removeWhere((el) => el.mapId == mapObjectIdDelete);
-      mapObjects.removeWhere((el) => el.mapId == mapObjectId);
     });
   }
 }

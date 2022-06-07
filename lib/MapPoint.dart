@@ -4,11 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:yandex_mapkit/yandex_mapkit.dart';
 
 class MapPoint {
+  static bool visible = false;
   static MapObjectId mapObjectIdFrom = MapObjectId('');
   static MapObjectId mapObjectIdTo = MapObjectId('');
   static Point pointFrom = Point(latitude: 52.29, longitude: 104.28);
   static Point pointTo = Point(latitude: 52.29, longitude: 104.28);
   static PlacemarkMapObject mapObjectFrom = PlacemarkMapObject(
+    onTap: (PlacemarkMapObject placemarkMapObject, Point point) {
+      mapObjects.removeWhere((el) => el.mapId == (MapObjectId(mapObjectIdFrom.value + mapObjectIdTo.value)));
+    },
       mapId: mapObjectIdFrom,
       point: pointFrom,
       consumeTapEvents: true,
